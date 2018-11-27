@@ -144,6 +144,10 @@ class LoginPageState extends State<LoginPage> {
         setState(() {
           _googleEmail = googleSignInAccount.email;
         });
+      } else {
+        print("No google token");
+        if (user != null) Util.clearCurrentUserData();
+        return;
       }
 
       _firebaseUser = await _fAuth.signInWithGoogle(
@@ -155,24 +159,28 @@ class LoginPageState extends State<LoginPage> {
         setState(() {
           _firebaseEmail = _firebaseUser.email;
         });
+      } else {
+        print("No firebase token");
+        if (user != null) Util.clearCurrentUserData();
+        return;
       }
 
       digest = Util.digest(_firebaseUser.email);
       print("Logging in with digest: " + digest);
       applicationState.digest = digest;
 
-      user = User.fromSnapshot(await database.child(digest).once());
+      User authUser = User.fromSnapshot(await database.child(digest).once());
       print("New user?");
 
-      if (user == null && context != null) {
+      if (authUser == null && context != null) {
         print("New user!");
         database.child(digest).set(new User(googleSignInAccount.displayName, digest, googleSignInAccount.email, false).toJson());
       }
 
-      if (user != null && user.active && context != null) {
-        applicationState.currentUser = user;
+      if (authUser != null && authUser.active && context != null) {
+        applicationState.currentUser = authUser;
 
-        Util.storeCurrentUserData(user);
+        Util.storeCurrentUserData(authUser);
         Navigator.of(context).pushAndRemoveUntil(
             MaterialPageRoute(builder: (BuildContext context) => new HomePage()),
                 (route) => route == null);
