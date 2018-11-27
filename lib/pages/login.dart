@@ -34,7 +34,7 @@ class LoginPageState extends State<LoginPage> {
   Widget build(BuildContext context) {
     Util.loadCurrentUserData().then((User user) {
       if (user != null && user.email != null) {
-        _signIn();
+        _signIn(user);
       }
     });
 
@@ -119,8 +119,7 @@ class LoginPageState extends State<LoginPage> {
     );
   }
 
-  void _signIn() async {
-    User user;
+  void _signIn([User user]) async {
     String digest;
     ApplicationState applicationState = Application.of(context);
     GoogleSignInAccount googleSignInAccount;
@@ -133,7 +132,11 @@ class LoginPageState extends State<LoginPage> {
     });
 
     try {
-      googleSignInAccount = await _gSignIn.signIn();
+      if (user != null) {
+        googleSignInAccount = await _gSignIn.signInSilently(suppressErrors: true);
+      } else {
+        googleSignInAccount = await _gSignIn.signIn();
+      }
       authentication = await googleSignInAccount.authentication;
 
       print("google token: " + authentication.idToken);
